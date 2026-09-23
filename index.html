@@ -2,146 +2,450 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>June-13 Synth</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>June13 Synth</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#031f28">
+
+  <style>
+    :root {
+      --bg-color: #031f28;
+      --card-bg: #0d4671;
+      --card-border: #216394;
+      --accent-blue: #093b61;
+      --slider-knob: #2a3c73;
+      --slider-knob-border: #7c223c;
+      --text-color: #ffffff;
+      --inactive-btn: #d3d3d3;
+      --inactive-text: #1a1a1a;
+      --active-step: #e38d13;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      background-color: #111;
+      color: var(--text-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 390px;
+      height: 844px;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (max-height: 850px) {
+      .app-container {
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+
+    .page {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 10px;
+    }
+
+    .page.active {
+      display: flex;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      margin: 5px 0 20px 0;
+    }
+
+    /* Play Page Grid */
+    .pad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      margin-bottom: 20px;
+    }
+
+    .chord-pad {
+      background-color: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1.35rem;
+      font-weight: 400;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.05s ease, background-color 0.05s ease;
+    }
+
+    .chord-pad:active, .test-note-btn:active, .seq-btn:active {
+      background-color: #2173b3;
+      transform: scale(0.96);
+    }
+
+    /* Settings Page Layout */
+    .settings-list, .seq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 5px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    /* Dropdown Styling */
+    select {
+      background-color: #f0f4f8;
+      color: #0d4671;
+      border: 2px solid var(--card-border);
+      border-radius: 10px;
+      padding: 6px 24px 6px 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%230d4671" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .slider-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 12px;
+      background: #d3d3d3;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 28px;
+      background: var(--slider-knob);
+      border: 2px solid var(--slider-knob-border);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Test Note Button */
+    .test-note-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--card-bg);
+      border: 2px dashed var(--card-border);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Sequencer Specifics */
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .step-card {
+      background-color: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.1s ease, background-color 0.1s ease;
+    }
+
+    .step-card.active-step {
+      border-color: var(--active-step);
+      background-color: #1e5a8a;
+      box-shadow: 0 0 8px var(--active-step);
+    }
+
+    .step-number {
+      font-size: 0.75rem;
+      color: #b0c4de;
+    }
+
+    .step-card select {
+      width: 100%;
+      font-size: 0.8rem;
+      padding: 4px;
+    }
+
+    .seq-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .seq-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background-color: var(--card-bg);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+    }
+
+    .seq-btn.play-active {
+      background-color: #27ae60;
+    }
+
+    .save-preset-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .save-preset-row input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      padding: 8px 12px;
+      background: #f0f4f8;
+      color: #0d4671;
+      font-weight: 600;
+      outline: none;
+    }
+
+    /* Navigation Bar (3 Tabs) */
+    .nav-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
+    .nav-btn {
+      padding: 14px 6px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .nav-btn.active {
+      background-color: var(--accent-blue);
+      color: #fff;
+      border: 1.5px solid var(--card-border);
+    }
+
+    .nav-btn.inactive {
+      background-color: var(--inactive-btn);
+      color: var(--inactive-text);
+    }
+  </style>
 </head>
 <body>
 
-  <header>
-    <h1>June-13 Synthesizer</h1>
-  </header>
-
-  <main class="content-area">
-    <!-- PAGE 1: PLAY (PADS) -->
+  <div class="app-container">
+    
+    <!-- PAGE 1: PLAY -->
     <div id="playPage" class="page active">
+      <h1>June13</h1>
       <div class="pad-grid">
-        <button class="chord-pad" data-notes="130.81,164.81,196.00">C-Dur</button>
-        <button class="chord-pad" data-notes="146.83,174.61,220.00">D-Moll</button>
-        <button class="chord-pad" data-notes="164.81,196.00,246.94">E-Moll</button>
+        <button class="chord-pad" data-notes="261.63,329.63,392.00">C-Dur</button>
+        <button class="chord-pad" data-notes="220.00,261.63,329.63">A-Moll</button>
         <button class="chord-pad" data-notes="174.61,220.00,261.63">F-Dur</button>
         <button class="chord-pad" data-notes="196.00,246.94,293.66">G-Dur</button>
-        <button class="chord-pad" data-notes="220.00,261.63,329.63">A-Moll</button>
+        <button class="chord-pad" data-notes="293.66,349.23,440.00">D-Moll</button>
+        <button class="chord-pad" data-notes="164.81,196.00,246.94">E-Moll</button>
+        <button class="chord-pad" data-notes="233.08,293.66,349.23">Bb-Dur</button>
+        <button class="chord-pad" data-notes="523.25,659.25,783.99">C-Dur</button>
       </div>
     </div>
 
-    <!-- PAGE 2: SETTINGS (OSZILLATOREN & EFFEKTE) -->
+    <!-- PAGE 2: SETTINGS -->
     <div id="settingsPage" class="page">
-      <button id="btnTestNote" class="btn-test">🔊 Test-Ton spielen</button>
-
-      <!-- Oszillatoren -->
-      <div class="control-group">
-        <h3>Oszillator 1</h3>
-        <select id="osc1Wave">
-          <option value="sawtooth">Sägezahn</option>
-          <option value="square">Rechteck</option>
-          <option value="sine">Sinus</option>
-          <option value="triangle">Dreieck</option>
-        </select>
-        <label>Lautstärke</label>
-        <input type="range" id="osc1Vol" min="0" max="1" step="0.01" value="0.8">
-      </div>
-
-      <div class="control-group">
-        <h3>Oszillator 2</h3>
-        <select id="osc2Wave">
-          <option value="square">Rechteck</option>
-          <option value="sawtooth">Sägezahn</option>
-          <option value="sine">Sinus</option>
-          <option value="triangle">Dreieck</option>
-        </select>
-        <label>Lautstärke</label>
-        <input type="range" id="osc2Vol" min="0" max="1" step="0.01" value="0.5">
-      </div>
-
-      <div class="control-group">
-        <h3>Oszillator 3 (Sub)</h3>
-        <select id="osc3Wave">
-          <option value="sine">Sinus</option>
-          <option value="triangle">Dreieck</option>
-          <option value="sawtooth">Sägezahn</option>
-        </select>
-        <label>Lautstärke</label>
-        <input type="range" id="osc3Vol" min="0" max="1" step="0.01" value="0.3">
-      </div>
-
-      <!-- Filter & Envelope -->
-      <div class="control-group">
-        <h3>Filter & Envelope</h3>
-        <label>Lowpass Cutoff (Hz)</label>
-        <input type="range" id="filter" min="100" max="8000" step="10" value="2500">
-        <label>Release (Sekunden)</label>
-        <input type="range" id="release" min="0.1" max="4.0" step="0.1" value="1.2">
-      </div>
-
-      <!-- Reverb -->
-      <div class="control-group">
-        <h3>Reverb (Hall)</h3>
-        <select id="reverbType">
-          <option value="hall" selected>Konzertsaal</option>
-          <option value="room">Raum</option>
-          <option value="cathedral">Kathedrale</option>
-          <option value="none">Aus</option>
-        </select>
-        <label>Hall Mix</label>
-        <input type="range" id="reverbMix" min="0" max="1" step="0.05" value="0.4">
-      </div>
-
-      <!-- Delay -->
-      <div class="control-group">
-        <h3>Delay (Echo)</h3>
-        <label>Verzögerung (Sekunden)</label>
-        <input type="range" id="delayTime" min="0.05" max="1.0" step="0.05" value="0.3">
-        <label>Feedback (Echo-Länge)</label>
-        <input type="range" id="delayFeedback" min="0" max="0.85" step="0.05" value="0.4">
-        <label>Delay Mix</label>
-        <input type="range" id="delayMix" min="0" max="1" step="0.05" value="0.3">
-      </div>
-    </div>
-
-    <!-- PAGE 3: SEQUENCER (LOOP) -->
-    <div id="seqPage" class="page">
-      <div class="control-group">
-        <label>Tempo (BPM): <span id="bpmValue">120</span></label>
-        <input type="range" id="bpmSlider" min="60" max="200" step="1" value="120">
-      </div>
-
-      <div class="seq-controls">
-        <button id="btnPlaySeq" class="btn-seq">▶ Start Loop</button>
-        <button id="btnClearSeq" class="btn-seq">Clear</button>
-      </div>
-
-      <div class="seq-grid">
-        <div class="step-card"><label>1</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>2</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>3</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>4</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>5</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>6</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>7</label><select class="seq-note"></select></div>
-        <div class="step-card"><label>8</label><select class="seq-note"></select></div>
-      </div>
-
-      <div class="control-group">
-        <h3>Loops speichern & laden</h3>
-        <div class="preset-controls">
-          <input type="text" id="presetName" placeholder="Name z.B. Melodie 1">
-          <button id="btnSavePreset" class="btn-seq">Speichern</button>
+      <div class="settings-list">
+        <div class="row">
+          <select id="osc1Wave">
+            <option value="sawtooth" selected>Säge</option>
+            <option value="square">Rechteck</option>
+            <option value="sine">Sinus</option>
+            <option value="triangle">Dreieck</option>
+          </select>
+          <div class="slider-container">
+            <span class="control-label">Vol.</span>
+            <input type="range" id="osc1Vol" min="0" max="1" step="0.05" value="0.8">
+          </div>
         </div>
-        <select id="savedPresetsSelect" style="margin-top: 8px;">
-          <option value="">-- Laden --</option>
-        </select>
+
+        <div class="row">
+          <select id="osc2Wave">
+            <option value="square" selected>Rechteck</option>
+            <option value="sawtooth">Säge</option>
+            <option value="sine">Sinus</option>
+            <option value="triangle">Dreieck</option>
+          </select>
+          <div class="slider-container">
+            <span class="control-label">Vol.</span>
+            <input type="range" id="osc2Vol" min="0" max="1" step="0.05" value="0.5">
+          </div>
+        </div>
+
+        <div class="row">
+          <select id="osc3Wave">
+            <option value="sine" selected>Sinus</option>
+            <option value="triangle">Dreieck</option>
+            <option value="sawtooth">Säge</option>
+            <option value="square">Rechteck</option>
+          </select>
+          <div class="slider-container">
+            <span class="control-label">Vol.</span>
+            <input type="range" id="osc3Vol" min="0" max="1" step="0.05" value="0.6">
+          </div>
+        </div>
+
+        <div class="slider-container">
+          <span class="control-label">Filter Cutoff</span>
+          <input type="range" id="filter" min="100" max="6000" value="2500">
+        </div>
+
+        <div class="slider-container">
+          <span class="control-label">Release</span>
+          <input type="range" id="release" min="0.05" max="3" step="0.05" value="0.5">
+        </div>
+
+        <div class="row">
+          <select id="reverbType">
+            <option value="none">Aus</option>
+            <option value="room">Zimmer</option>
+            <option value="hall">Halle</option>
+            <option value="cathedral" selected>Kathedrale</option>
+          </select>
+          <div class="slider-container">
+            <span class="control-label">Reverb Mix</span>
+            <input type="range" id="reverbMix" min="0" max="0.8" step="0.02" value="0.35">
+          </div>
+        </div>
+
+        <div class="slider-container">
+          <span class="control-label">Echo</span>
+          <input type="range" id="delayTime" min="0.05" max="0.8" step="0.02" value="0.35">
+        </div>
+
+        <div class="slider-container">
+          <span class="control-label">Feedback</span>
+          <input type="range" id="delayFeedback" min="0" max="0.85" step="0.02" value="0.5">
+        </div>
+
+        <div class="slider-container">
+          <span class="control-label">Wet/Dry Mix</span>
+          <input type="range" id="delayMix" min="0" max="0.8" step="0.02" value="0.35">
+        </div>
+
+        <button id="btnTestNote" class="test-note-btn">🔊 Test Note (C3)</button>
       </div>
     </div>
-  </main>
 
-  <!-- NAVIGATION BOTTOM BAR -->
-  <nav class="tab-bar">
-    <button id="btnPlayTab" class="nav-btn active">Play</button>
-    <button id="btnSettingsTab" class="nav-btn inactive">Settings</button>
-    <button id="btnSeqTab" class="nav-btn inactive">Loop</button>
-  </nav>
+    <!-- PAGE 3: SEQUENCER -->
+    <div id="seqPage" class="page">
+      <div class="seq-list">
+        
+        <div class="slider-container">
+          <span class="control-label">Tempo (<span id="bpmValue">120</span> BPM)</span>
+          <input type="range" id="bpmSlider" min="60" max="220" value="120">
+        </div>
+
+        <!-- 8 Step Grid -->
+        <div class="step-grid">
+          <div class="step-card" data-step="0"><span class="step-number">1</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="1"><span class="step-number">2</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="2"><span class="step-number">3</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="3"><span class="step-number">4</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="4"><span class="step-number">5</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="5"><span class="step-number">6</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="6"><span class="step-number">7</span><select class="seq-note"></select></div>
+          <div class="step-card" data-step="7"><span class="step-number">8</span><select class="seq-note"></select></div>
+        </div>
+
+        <div class="seq-controls">
+          <button id="btnPlaySeq" class="seq-btn">▶ Start Loop</button>
+          <button id="btnClearSeq" class="seq-btn">Reset</button>
+        </div>
+
+        <!-- Save / Load Presets -->
+        <div class="save-preset-row">
+          <input type="text" id="presetName" placeholder="Pattern Name...">
+          <button id="btnSavePreset" class="seq-btn">Speichern</button>
+        </div>
+
+        <div class="row" style="margin-top: 5px;">
+          <span class="control-label">Gespeicherte Loops:</span>
+          <select id="savedPresetsSelect" style="width: 160px;">
+            <option value="">-- Laden --</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION BAR (PLAY, SETTINGS, LOOP) -->
+    <div class="nav-bar">
+      <button id="btnPlayTab" class="nav-btn active">Play</button>
+      <button id="btnSettingsTab" class="nav-btn inactive">Settings</button>
+      <button id="btnSeqTab" class="nav-btn inactive">Loop</button>
+    </div>
+
+  </div>
 
   <script src="app.js"></script>
 </body>
